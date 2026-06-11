@@ -75,6 +75,53 @@ func TestNamedError_nil(t *testing.T) {
 	}
 }
 
+func findAttr(attrs []slog.Attr, key string) (slog.Attr, bool) {
+	for _, a := range attrs {
+		if a.Key == key {
+			return a, true
+		}
+	}
+	return slog.Attr{}, false
+}
+
+func TestError_joinedErrors(t *testing.T) {
+	err := errors.Join(errors.New("a"), errors.New("b"))
+	attr := Error(err)
+
+	group := attr.Value.Resolve()
+	attrs := group.Group()
+
+	causesAttr, ok := findAttr(attrs, "causes")
+	if !ok {
+		t.Fatal("expected causes attr, not found")
+	}
+	causes := causesAttr.Value.Group()
+	if len(causes) != 2 {
+		t.Fatalf("len(causes) = %d, want 2", len(causes))
+	}
+	if causes[0].Key != "0" || causes[0].Value.Resolve().Group()[0].Value.String() != "a" {
+		t.Errorf("causes[0] = %v, want 0.msg=a", causes[0])
+	}
+	if causes[1].Key != "1" || causes[1].Value.Resolve().Group()[0].Value.String() != "b" {
+		t.Errorf("causes[1] = %v, want 1.msg=b", causes[1])
+	}
+}
+
+func TestError_joinedErrors_withNil(t *testing.T) {
+	err := errors.Join(errors.New("a"), nil, errors.New("b"))
+	attr := Error(err)
+
+	group := attr.Value.Resolve()
+	causesAttr, ok := findAttr(group.Group(), "causes")
+	if !ok {
+		t.Fatal("expected causes attr, not found")
+	}
+	causes := causesAttr.Value.Group()
+	if len(causes) != 2 {
+		t.Fatalf("len(causes) = %d, want 2 (nil should be skipped)", len(causes))
+	}
+}
+
 func TestNamedError_customKey(t *testing.T) {
 	err := errors.New("custom key error")
 	attr := NamedError("myErr", err)
