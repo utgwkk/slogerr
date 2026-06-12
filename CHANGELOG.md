@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.3](https://github.com/utgwkk/slogerrattr/compare/v0.0.2...v0.0.3) - 2026-06-12
+
+- Add tests for multi-unwrapper errors with nil causes by @utgwkk in https://github.com/utgwkk/slogerrattr/pull/5
+
 ## [v0.0.2](https://github.com/utgwkk/slogerrattr/compare/v0.0.1...v0.0.2) - 2026-06-12
 
 - Reduce allocations in errValue.LogValue by @utgwkk in https://github.com/utgwkk/slogerrattr/pull/2
