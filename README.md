@@ -1,5 +1,7 @@
 # slogerr
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/utgwkk/slogerr.svg)](https://pkg.go.dev/github.com/utgwkk/slogerr)
+
 `slogerr` provides `Error` and `NamedError` helpers for Go's `log/slog` package, inspired by the equivalent functions in [uber-go/zap](https://github.com/uber-go/zap).
 
 Each helper returns a `slog.Attr` that encodes structured error information:
