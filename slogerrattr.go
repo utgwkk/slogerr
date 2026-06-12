@@ -30,23 +30,47 @@ type multiUnwrapper interface {
 }
 
 func (e *errValue) LogValue() slog.Value {
-	msg := e.err.Error()
-	attrs := []slog.Attr{slog.String("msg", msg)}
-	if verbose := fmt.Sprintf("%+v", e.err); verbose != msg {
-		attrs = append(attrs, slog.String("verbose", verbose))
+	return errorValue(e.err)
+}
+
+func errorValue(err error) slog.Value {
+	msg := err.Error()
+
+	_, hasFormatter := err.(fmt.Formatter)
+	mu, hasMulti := err.(multiUnwrapper)
+
+	n := 1
+	if hasFormatter {
+		n++
 	}
-	if mu, ok := e.err.(multiUnwrapper); ok {
+	if hasMulti {
+		n++
+	}
+
+	attrs := make([]slog.Attr, 0, n)
+	attrs = append(attrs, slog.String("msg", msg))
+
+	// %+v only differs from %v when the error implements fmt.Formatter, so skip
+	// the allocation-heavy formatting otherwise.
+	if hasFormatter {
+		if verbose := fmt.Sprintf("%+v", err); verbose != msg {
+			attrs = append(attrs, slog.String("verbose", verbose))
+		}
+	}
+
+	if hasMulti {
 		errs := mu.Unwrap()
 		causeAttrs := make([]slog.Attr, 0, len(errs))
 		for i, cause := range errs {
 			if cause == nil {
 				continue
 			}
-			causeAttrs = append(causeAttrs, slog.Any(strconv.Itoa(i), &errValue{err: cause}))
+			causeAttrs = append(causeAttrs, slog.Attr{Key: strconv.Itoa(i), Value: errorValue(cause)})
 		}
 		if len(causeAttrs) > 0 {
 			attrs = append(attrs, slog.Attr{Key: "causes", Value: slog.GroupValue(causeAttrs...)})
 		}
 	}
+
 	return slog.GroupValue(attrs...)
 }
