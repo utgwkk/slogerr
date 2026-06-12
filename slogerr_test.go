@@ -1,4 +1,4 @@
-package slogerrattr
+package slogerr
 
 import (
 	"errors"
@@ -132,7 +132,7 @@ func (e *multiErr) Error() string    { return e.msg }
 func (e *multiErr) Unwrap() []error  { return e.errs }
 
 // TestError_multiUnwrapperWithNilCause tests that nil entries returned by
-// Unwrap() []error are skipped (lines 65-67 in slogerrattr.go).
+// Unwrap() []error are skipped (lines 65-67 in slogerr.go).
 // errors.Join filters nils before storing, so a custom type is needed here.
 func TestError_multiUnwrapperWithNilCause(t *testing.T) {
 	err := &multiErr{

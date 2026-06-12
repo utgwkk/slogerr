@@ -1,6 +1,6 @@
-# slogerrattr
+# slogerr
 
-`slogerrattr` provides `Error` and `NamedError` helpers for Go's `log/slog` package, inspired by the equivalent functions in [uber-go/zap](https://github.com/uber-go/zap).
+`slogerr` provides `Error` and `NamedError` helpers for Go's `log/slog` package, inspired by the equivalent functions in [uber-go/zap](https://github.com/uber-go/zap).
 
 Each helper returns a `slog.Attr` that encodes structured error information:
 
@@ -11,7 +11,7 @@ Each helper returns a `slog.Attr` that encodes structured error information:
 ## Installation
 
 ```
-go get github.com/utgwkk/slogerrattr
+go get github.com/utgwkk/slogerr
 ```
 
 ## Usage
@@ -21,21 +21,21 @@ import (
     "errors"
     "log/slog"
 
-    "github.com/utgwkk/slogerrattr"
+    "github.com/utgwkk/slogerr"
 )
 
 // Basic usage — key is "error"
-slog.Info("request failed", slogerrattr.Error(err))
+slog.Info("request failed", slogerr.Error(err))
 
 // Custom key
-slog.Info("request failed", slogerrattr.NamedError("cause", err))
+slog.Info("request failed", slogerr.NamedError("cause", err))
 
 // nil is a no-op: returns a zero-value slog.Attr that handlers skip
-slog.Info("maybe failed", slogerrattr.Error(nil))
+slog.Info("maybe failed", slogerr.Error(nil))
 
 // errors.Join: individual causes are recorded under "causes"
 joined := errors.Join(errors.New("db error"), errors.New("timeout"))
-slog.Info("multiple errors", slogerrattr.Error(joined))
+slog.Info("multiple errors", slogerr.Error(joined))
 ```
 
 ## Output format

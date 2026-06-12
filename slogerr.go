@@ -1,4 +1,4 @@
-package slogerrattr
+package slogerr
 
 import (
 	"fmt"
