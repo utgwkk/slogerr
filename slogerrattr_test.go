@@ -122,6 +122,58 @@ func TestError_joinedErrors_withNil(t *testing.T) {
 	}
 }
 
+// multiErr is an error whose Unwrap returns the slice as-is, including any nils.
+type multiErr struct {
+	msg  string
+	errs []error
+}
+
+func (e *multiErr) Error() string    { return e.msg }
+func (e *multiErr) Unwrap() []error  { return e.errs }
+
+// TestError_multiUnwrapperWithNilCause tests that nil entries returned by
+// Unwrap() []error are skipped (lines 65-67 in slogerrattr.go).
+// errors.Join filters nils before storing, so a custom type is needed here.
+func TestError_multiUnwrapperWithNilCause(t *testing.T) {
+	err := &multiErr{
+		msg:  "multi",
+		errs: []error{errors.New("a"), nil, errors.New("b")},
+	}
+	attr := Error(err)
+
+	group := attr.Value.Resolve()
+	causesAttr, ok := findAttr(group.Group(), "causes")
+	if !ok {
+		t.Fatal("expected causes attr, not found")
+	}
+	causes := causesAttr.Value.Group()
+	if len(causes) != 2 {
+		t.Fatalf("len(causes) = %d, want 2 (nil cause should be skipped)", len(causes))
+	}
+	if causes[0].Key != "0" || causes[0].Value.Resolve().Group()[0].Value.String() != "a" {
+		t.Errorf("causes[0] = %v, want 0.msg=a", causes[0])
+	}
+	if causes[1].Key != "2" || causes[1].Value.Resolve().Group()[0].Value.String() != "b" {
+		t.Errorf("causes[1] = %v, want 2.msg=b", causes[1])
+	}
+}
+
+// TestError_multiUnwrapperAllNilCauses tests that when all causes are nil,
+// no "causes" attr is added to the output.
+func TestError_multiUnwrapperAllNilCauses(t *testing.T) {
+	err := &multiErr{
+		msg:  "all nil causes",
+		errs: []error{nil, nil},
+	}
+	attr := Error(err)
+
+	group := attr.Value.Resolve()
+	_, ok := findAttr(group.Group(), "causes")
+	if ok {
+		t.Fatal("expected no causes attr when all causes are nil")
+	}
+}
+
 func TestNamedError_customKey(t *testing.T) {
 	err := errors.New("custom key error")
 	attr := NamedError("myErr", err)
