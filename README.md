@@ -61,17 +61,6 @@ The attribute value is a `slog.GroupValue`, so with `slog.NewJSONHandler` the ou
 
 > **Note:** `slog`'s type system has no native array kind; causes are represented as a group with numeric string keys (`"0"`, `"1"`, ...) rather than a JSON array.
 
-## API
-
-```go
-// Error is shorthand for NamedError("error", err).
-func Error(err error) slog.Attr
-
-// NamedError constructs a slog.Attr that stores error information under key.
-// Returns a zero-value Attr (no-op) when err is nil.
-func NamedError(key string, err error) slog.Attr
-```
-
 ## Acknowledgments
 
 This library is inspired by the `Error` and `NamedError` functions in
