@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.2.0](https://github.com/utgwkk/slogerr/compare/v0.1.0...v0.2.0) - 2026-06-12
+
+- Add Go Reference badge to README by @utgwkk in https://github.com/utgwkk/slogerr/pull/9
+- Support slog.LogValuer interface in Error and NamedError by @utgwkk in https://github.com/utgwkk/slogerr/pull/11
+
 ## [v0.1.0](https://github.com/utgwkk/slogerr/compare/v0.0.3...v0.1.0) - 2026-06-12
 
 - Rename package from slogerrattr to slogerr by @utgwkk in https://github.com/utgwkk/slogerr/pull/7
