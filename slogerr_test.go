@@ -174,6 +174,123 @@ func TestError_multiUnwrapperAllNilCauses(t *testing.T) {
 	}
 }
 
+// logValueErr is an error that also implements slog.LogValuer.
+type logValueErr struct {
+	msg    string
+	fields []slog.Attr
+}
+
+func (e *logValueErr) Error() string { return e.msg }
+func (e *logValueErr) LogValue() slog.Value {
+	return slog.GroupValue(e.fields...)
+}
+
+func TestError_logValuer(t *testing.T) {
+	// When error implements slog.LogValuer, its LogValue() result is used directly
+	// as the attribute value — no wrapping with msg/verbose/causes.
+	err := &logValueErr{
+		msg: "something failed",
+		fields: []slog.Attr{
+			slog.String("request_id", "abc-123"),
+			slog.Int("code", 42),
+		},
+	}
+	attr := Error(err)
+
+	resolved := attr.Value.Resolve()
+	if resolved.Kind() != slog.KindGroup {
+		t.Fatalf("value kind = %v, want Group", resolved.Kind())
+	}
+	attrs := resolved.Group()
+
+	if len(attrs) != 2 {
+		t.Fatalf("len(attrs) = %d, want 2; attrs = %v", len(attrs), attrs)
+	}
+
+	ridAttr, ok := findAttr(attrs, "request_id")
+	if !ok {
+		t.Fatal("expected request_id attr, not found")
+	}
+	if ridAttr.Value.String() != "abc-123" {
+		t.Errorf("request_id = %q, want %q", ridAttr.Value.String(), "abc-123")
+	}
+
+	codeAttr, ok := findAttr(attrs, "code")
+	if !ok {
+		t.Fatal("expected code attr, not found")
+	}
+	if codeAttr.Value.Int64() != 42 {
+		t.Errorf("code = %d, want 42", codeAttr.Value.Int64())
+	}
+
+	// msg sub-key from errValue should NOT be present.
+	if _, ok := findAttr(attrs, "msg"); ok {
+		t.Error("unexpected msg attr: LogValuer errors should not be wrapped")
+	}
+}
+
+func TestError_logValuer_emptyGroup(t *testing.T) {
+	// LogValuer returning an empty group produces an empty group value.
+	err := &logValueErr{msg: "plain error", fields: nil}
+	attr := Error(err)
+	resolved := attr.Value.Resolve()
+	if resolved.Kind() != slog.KindGroup {
+		t.Fatalf("value kind = %v, want Group", resolved.Kind())
+	}
+	if len(resolved.Group()) != 0 {
+		t.Errorf("expected empty group, got %v", resolved.Group())
+	}
+}
+
+// formatterLogValueErr implements error, fmt.Formatter, and slog.LogValuer.
+type formatterLogValueErr struct {
+	msg     string
+	verbose string
+	fields  []slog.Attr
+}
+
+func (e *formatterLogValueErr) Error() string { return e.msg }
+
+func (e *formatterLogValueErr) Format(f fmt.State, verb rune) {
+	if verb == 'v' && f.Flag('+') {
+		fmt.Fprint(f, e.verbose)
+		return
+	}
+	fmt.Fprint(f, e.msg)
+}
+
+func (e *formatterLogValueErr) LogValue() slog.Value {
+	return slog.GroupValue(e.fields...)
+}
+
+func TestError_logValuer_withVerbose(t *testing.T) {
+	// slog.LogValuer takes priority: even if the error also implements fmt.Formatter,
+	// the output is solely what LogValue() returns — no msg/verbose wrapping.
+	err := &formatterLogValueErr{
+		msg:     "rich error",
+		verbose: "rich error\n  stack detail",
+		fields:  []slog.Attr{slog.String("trace_id", "xyz")},
+	}
+	attr := Error(err)
+	resolved := attr.Value.Resolve()
+	attrs := resolved.Group()
+
+	traceAttr, ok := findAttr(attrs, "trace_id")
+	if !ok {
+		t.Fatal("expected trace_id attr from LogValuer, not found")
+	}
+	if traceAttr.Value.String() != "xyz" {
+		t.Errorf("trace_id = %q, want %q", traceAttr.Value.String(), "xyz")
+	}
+
+	if _, ok := findAttr(attrs, "msg"); ok {
+		t.Error("unexpected msg attr: LogValuer errors should not be wrapped")
+	}
+	if _, ok := findAttr(attrs, "verbose"); ok {
+		t.Error("unexpected verbose attr: LogValuer errors should not be wrapped")
+	}
+}
+
 func TestNamedError_customKey(t *testing.T) {
 	err := errors.New("custom key error")
 	attr := NamedError("myErr", err)

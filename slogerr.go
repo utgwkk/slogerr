@@ -13,10 +13,15 @@ func Error(err error) slog.Attr {
 
 // NamedError constructs a slog.Attr that stores error information under key.
 // Returns a zero-value Attr (no-op) when err is nil.
-// Errors that produce a different %+v output than Error() also get a "verbose" sub-key.
+// If err implements slog.LogValuer, it is passed directly to slog.Any so that
+// its LogValue() output is used as-is.
+// Otherwise, errors get a "msg" sub-key and, when applicable, "verbose" and "causes".
 func NamedError(key string, err error) slog.Attr {
 	if err == nil {
 		return slog.Attr{}
+	}
+	if _, ok := err.(slog.LogValuer); ok {
+		return slog.Any(key, err)
 	}
 	return slog.Any(key, &errValue{err: err})
 }
