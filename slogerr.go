@@ -38,6 +38,13 @@ func (e *errValue) LogValue() slog.Value {
 	return errorValue(e.err)
 }
 
+// ErrorValue converts err into a slog.Value that carries its message and, when
+// applicable, "verbose" and "causes" sub-attributes. It returns the same value
+// that NamedError logs for a non-LogValuer error.
+func ErrorValue(err error) slog.Value {
+	return errorValue(err)
+}
+
 func errorValue(err error) slog.Value {
 	msg := err.Error()
 
