@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.1](https://github.com/utgwkk/slogerr/compare/v0.2.0...v0.2.1) - 2026-07-15
+
+- Remove API documentation from README by @utgwkk in https://github.com/utgwkk/slogerr/pull/12
+- Add public ErrorValue function to convert errors to slog.Value by @utgwkk in https://github.com/utgwkk/slogerr/pull/17
+- Bump actions/checkout from 6.0.3 to 7.0.0 by @dependabot[bot] in https://github.com/utgwkk/slogerr/pull/14
+- Bump Songmu/tagpr from 1.20.0 to 1.20.1 by @dependabot[bot] in https://github.com/utgwkk/slogerr/pull/16
+- Bump actions/setup-go from 6.4.0 to 6.5.0 by @dependabot[bot] in https://github.com/utgwkk/slogerr/pull/15
+
 ## [v0.2.0](https://github.com/utgwkk/slogerr/compare/v0.1.0...v0.2.0) - 2026-06-12
 
 - Add Go Reference badge to README by @utgwkk in https://github.com/utgwkk/slogerr/pull/9
